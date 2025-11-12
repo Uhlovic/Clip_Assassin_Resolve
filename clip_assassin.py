@@ -6,23 +6,43 @@ GUI Application for cutting video clips based on time ranges
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import threading
+import sys
+import os
 from resolve_core import ResolveConnection
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 class ClipAssassinGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("⚔️ Clip Assassin - DaVinci Resolve")
-        self.root.geometry("500x650")
-        self.root.resizable(False, False)
+        self.root.geometry("550x750")
+        self.root.resizable(True, True)
+        self.root.minsize(500, 650)
 
-        # Set icon
+        # Set icon for window and taskbar
         try:
-            icon_image = tk.PhotoImage(file='Clip_assassin_icon.png')
-            self.root.iconphoto(True, icon_image)
+            # Try .ico first (works best on Windows for taskbar)
+            icon_path = resource_path('icon.ico')
+            self.root.iconbitmap(icon_path)
         except Exception as e:
-            # Icon not found or error loading
-            pass
+            try:
+                # Fallback to PNG (for macOS/Linux)
+                png_path = resource_path('Clip_assassin_icon.png')
+                icon_image = tk.PhotoImage(file=png_path)
+                self.root.iconphoto(True, icon_image)
+            except Exception as ex:
+                # Icon not found or error loading
+                print(f"Icon loading failed: {e}, {ex}")
 
         # Dark theme colors
         self.bg_color = "#1a1a1a"
@@ -192,18 +212,19 @@ class ClipAssassinGUI:
             padx=10,
             pady=10
         )
-        section4.pack(pady=5, padx=20, fill=tk.X)
+        section4.pack(pady=5, padx=20, fill=tk.BOTH, expand=True)
 
         self.result_text = scrolledtext.ScrolledText(
             section4,
-            height=5,
+            height=8,
             font=("Arial", 9),
             bg="#1e1e1e",
             fg=self.fg_color,
             relief=tk.FLAT,
             padx=5,
             pady=5,
-            state=tk.DISABLED
+            state=tk.DISABLED,
+            wrap=tk.WORD
         )
         self.result_text.pack(fill=tk.BOTH, expand=True)
 
