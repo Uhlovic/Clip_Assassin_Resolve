@@ -1,0 +1,17 @@
+# Clip Assassin for DaVinci Resolve - Python Dependencies
+
+# No external dependencies required!
+# This project uses only Python standard library:
+# - tkinter (GUI)
+# - threading
+# - re
+
+# DaVinci Resolve API is included with Resolve installation
+
+# Optional: If you want to use system Python instead of Resolve's bundled Python,
+# make sure you have Python 3.6 or later installed.
+
+# To check your Python version:
+# python --version
+# or
+# python3 --version
