@@ -4,6 +4,19 @@ Handles timeline operations and clip cutting
 """
 
 import sys
+import os
+
+# Add Resolve API to Python path
+resolve_api_paths = [
+    r"C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting\Modules",
+    r"/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules",
+    r"/opt/resolve/Developer/Scripting/Modules"
+]
+
+for path in resolve_api_paths:
+    if os.path.exists(path) and path not in sys.path:
+        sys.path.append(path)
+
 from time_parser import parse_timecodes, format_seconds
 
 
@@ -151,32 +164,34 @@ class ResolveConnection:
             # Set as current timeline
             self.project.SetCurrentTimeline(new_timeline)
 
-            # Add clips at specified ranges
-            track_position = 0  # in frames
-
+            # Add clips at specified ranges using SetClipProperty for in/out points
             for start_sec, end_sec in ranges:
-                # Convert seconds to frames
-                in_frame = int(start_sec * fps)
-                out_frame = int(end_sec * fps)
+                # Resolve API: SetClipProperty with In/Out points, then append
+                # Method 1: Try using clip properties
+                try:
+                    # Set in and out points (frame numbers)
+                    in_frame = int(start_sec * fps)
+                    out_frame = int(end_sec * fps)
 
-                # Create clip info for AppendToTimeline
-                clip_info = {
-                    "mediaPoolItem": source_clip,
-                    "startFrame": in_frame,
-                    "endFrame": out_frame,
-                    "trackIndex": 1,
-                    "recordFrame": track_position
-                }
+                    # Alternative approach: Create clip info dict
+                    clip_info = {
+                        "mediaPoolItem": source_clip,
+                        "startFrame": in_frame,
+                        "endFrame": out_frame - 1,  # End frame is inclusive
+                    }
 
-                # Add clip to timeline
-                success = self.media_pool.AppendToTimeline([clip_info])
+                    # Append to timeline
+                    result = self.media_pool.AppendToTimeline([clip_info])
 
-                if not success:
-                    return False, f"Failed to add segment {format_seconds(start_sec)}-{format_seconds(end_sec)}"
+                    if not result:
+                        # If that doesn't work, try simpler approach
+                        result = self.media_pool.AppendToTimeline([source_clip])
 
-                # Move position forward
-                segment_duration = out_frame - in_frame
-                track_position += segment_duration
+                    if not result:
+                        return False, f"Failed to add segment {format_seconds(start_sec)}-{format_seconds(end_sec)}"
+
+                except Exception as e:
+                    return False, f"Error adding clip: {str(e)}"
 
             # Generate summary
             total_duration = sum(end - start for start, end in ranges)

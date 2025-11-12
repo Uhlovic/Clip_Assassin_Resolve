@@ -27,11 +27,34 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. No manual
 
 ## 🚀 Installation
 
-### Requirements
+### System Requirements
 
-- **DaVinci Resolve 18 or later** (Free or Studio)
-- **Python 3.6+** (usually comes with Resolve)
-- **Windows** or **macOS** or **Linux**
+#### For Windows (.exe version - Recommended):
+- ✅ **DaVinci Resolve 18+** (Free or Studio)
+- ✅ **Windows 7/8/10/11**
+- ❌ **Python NOT required!**
+
+#### For macOS/Linux (Python version):
+- ✅ **DaVinci Resolve 18+** (Free or Studio)
+- ✅ **Python 3.6+** (usually pre-installed)
+- ✅ **macOS 10.12+ or Linux**
+
+#### What's Included with Resolve:
+- ✅ **DaVinci Resolve Python API** - Automatically installed in:
+  - Windows: `C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting\`
+  - macOS: `/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/`
+  - Linux: `/opt/resolve/Developer/Scripting/`
+
+### Quick Start - Windows (Easiest!)
+
+1. **Download `Clip Assassin.exe`** from [Releases](https://github.com/Uhlovic/Clip_Assassin_Resolve/releases)
+2. **Open DaVinci Resolve** with a project
+3. **Double-click `Clip Assassin.exe`**
+4. **Done!** No Python installation needed!
+
+### Quick Start - macOS/Linux (Python Required)
+
+If you're on macOS or Linux, or prefer to run from source:
 
 ### Step 1: Locate Python
 
@@ -180,15 +203,25 @@ Result timeline: "Assassinated - [clip name]"
 - Try clicking "🔄 Reconnect"
 
 **"DaVinci Resolve Python API not found"**
-- Use Resolve's bundled Python (see installation paths)
-- Or set `RESOLVE_SCRIPT_API` environment variable:
-  ```bash
-  # Windows
-  set RESOLVE_SCRIPT_API=C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting
 
-  # macOS
-  export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
-  ```
+⚠️ **Important:** The Python API is installed automatically with DaVinci Resolve in:
+- **Windows:** `C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting\Modules`
+- **macOS:** `/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules`
+- **Linux:** `/opt/resolve/Developer/Scripting/Modules`
+
+If you get this error:
+1. **Check if Resolve is properly installed** - try opening Resolve first
+2. **Verify the API folder exists** at the paths above
+3. **If using .exe version:** This should work automatically
+4. **If running Python scripts:** The script automatically adds these paths, but you can manually set:
+   ```bash
+   # Windows
+   set RESOLVE_SCRIPT_API=C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting
+
+   # macOS/Linux
+   export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
+   ```
+5. **Reinstall Resolve** if the API folder is missing (it should install automatically)
 
 **"No video clip found in Media Pool"**
 - Import at least one video clip to Media Pool

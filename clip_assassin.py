@@ -16,6 +16,14 @@ class ClipAssassinGUI:
         self.root.geometry("500x650")
         self.root.resizable(False, False)
 
+        # Set icon
+        try:
+            icon_image = tk.PhotoImage(file='Clip_assassin_icon.png')
+            self.root.iconphoto(True, icon_image)
+        except Exception as e:
+            # Icon not found or error loading
+            pass
+
         # Dark theme colors
         self.bg_color = "#1a1a1a"
         self.fg_color = "#e0e0e0"
