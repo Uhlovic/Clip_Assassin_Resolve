@@ -8,6 +8,16 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. No manual
 
 ---
 
+## ☕ Support
+
+**Did I save you time?** Consider buying me a coffee!
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/Uhlovic)
+
+**[buymeacoffee.com/Uhlovic](https://buymeacoffee.com/Uhlovic)**
+
+---
+
 ## ✨ Features
 
 - ✅ **Multiple time formats supported:**
