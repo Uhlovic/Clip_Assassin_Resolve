@@ -211,15 +211,16 @@ class ResolveConnection:
                 # Resolve API: SetClipProperty with In/Out points, then append
                 # Method 1: Try using clip properties
                 try:
-                    # Set in and out points (frame numbers)
-                    in_frame = int(start_sec * fps)
-                    out_frame = int(end_sec * fps)
+                    # Set in and out points (frame numbers) - use round for precision
+                    # Note: startFrame is inclusive, endFrame is exclusive (like Python ranges)
+                    in_frame = round(start_sec * fps)
+                    out_frame = round(end_sec * fps)
 
-                    # Alternative approach: Create clip info dict
+                    # Create clip info dict with frame-accurate timing
                     clip_info = {
                         "mediaPoolItem": source_clip,
                         "startFrame": in_frame,
-                        "endFrame": out_frame - 1,  # End frame is inclusive
+                        "endFrame": out_frame,
                     }
 
                     # Append to timeline
@@ -239,6 +240,8 @@ class ResolveConnection:
             total_duration = sum(end - start for start, end in ranges)
             summary = f"✓ Mission accomplished!\n\n"
             summary += f"Timeline: {timeline_name}\n"
+            summary += f"Clip: {clip_name}\n"
+            summary += f"Framerate: {framerate:.2f} fps (detected)\n"
             summary += f"Segments: {len(ranges)}\n"
             summary += f"Total duration: {format_seconds(total_duration)}\n\n"
             summary += "Segments:\n"
