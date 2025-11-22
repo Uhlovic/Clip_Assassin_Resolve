@@ -81,6 +81,23 @@ class ResolveConnection:
         root_folder = self.media_pool.GetRootFolder()
         return self._find_video_clip_recursive(root_folder)
 
+    def get_clip_framerate(self, clip):
+        """
+        Get framerate from a MediaPoolItem
+
+        Args:
+            clip: MediaPoolItem
+
+        Returns:
+            float: Framerate (e.g., 59.94, 29.97, 30, 24, etc.) or 30.0 as fallback
+        """
+        try:
+            clip_property = clip.GetClipProperty()
+            fps = float(clip_property.get("FPS", 30.0))
+            return fps
+        except Exception:
+            return 30.0  # Fallback to 30fps
+
     def _find_video_clip_recursive(self, folder):
         """Recursively search for video clip in folders"""
         # Check clips in current folder
@@ -100,27 +117,19 @@ class ResolveConnection:
 
         return None
 
-    def cut_video(self, timecodes_text, source_clip=None):
+    def cut_video(self, timecodes_text, source_clip=None, reverse_mode=False):
         """
         Create a new timeline with only the specified time ranges
 
         Args:
             timecodes_text: Multi-line string with time ranges
             source_clip: MediaPoolItem to use (if None, uses first video clip)
+            reverse_mode: If True, keep everything EXCEPT marked ranges (default: False)
 
         Returns:
             tuple: (success: bool, message: str)
         """
         try:
-            # Parse time ranges
-            ranges, errors = parse_timecodes(timecodes_text)
-
-            if not ranges:
-                error_msg = "No valid time ranges found."
-                if errors:
-                    error_msg += "\n\nErrors:\n" + "\n".join(errors)
-                return False, error_msg
-
             # Get source clip
             if not source_clip:
                 source_clip = self.get_first_video_clip()
@@ -129,6 +138,18 @@ class ResolveConnection:
                 return False, "No video clip found in Media Pool. Please import a video first."
 
             clip_name = source_clip.GetName()
+
+            # Get clip framerate for accurate timecode parsing
+            framerate = self.get_clip_framerate(source_clip)
+
+            # Parse time ranges with detected framerate
+            ranges, errors = parse_timecodes(timecodes_text, framerate)
+
+            if not ranges:
+                error_msg = "No valid time ranges found."
+                if errors:
+                    error_msg += "\n\nErrors:\n" + "\n".join(errors)
+                return False, error_msg
 
             # Get clip properties
             clip_property = source_clip.GetClipProperty()
@@ -144,6 +165,27 @@ class ResolveConnection:
 
             if invalid_ranges:
                 return False, "Some ranges exceed clip duration:\n" + "\n".join(invalid_ranges)
+
+            # REVERSE MODE: Convert marked ranges to inverse ranges
+            if reverse_mode:
+                inverse_ranges = []
+                last_end = 0
+
+                for start, end in ranges:
+                    # Add segment before this marked range
+                    if last_end < start:
+                        inverse_ranges.append((last_end, start))
+                    last_end = end
+
+                # Add final segment after last marked range
+                if last_end < duration_seconds:
+                    inverse_ranges.append((last_end, duration_seconds))
+
+                # Replace ranges with inverse ranges
+                ranges = inverse_ranges
+
+                if not ranges:
+                    return False, "REVERSE mode: No segments to keep. The marked ranges cover the entire clip."
 
             # Create new timeline
             timeline_name = f"Assassinated - {clip_name}"

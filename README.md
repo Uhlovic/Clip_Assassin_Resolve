@@ -1,10 +1,10 @@
 # ⚔️ CLIP ASSASSIN for DaVinci Resolve
 
-**Version 1.0** - For DaVinci Resolve 18+ (Python API)
+**Version 1.1** - For DaVinci Resolve 18+ (Python API)
 
 **Cuts. Without mercy.**
 
-Automatically cut video clips based on time ranges in DaVinci Resolve. No manual cutting, no framerate headaches.
+Automatically cut video clips based on time ranges in DaVinci Resolve. Now with **professional timecode support** and **REVERSE BLADES** mode!
 
 ---
 
@@ -20,15 +20,27 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. No manual
 
 ## ✨ Features
 
+### **🎯 Version 1.1 - NEW!**
+- ✅ **Professional timecode with frames:**
+  - `00:01:30:15-00:02:00:20` (non-drop-frame with `:`)
+  - `00:01:30;15-00:02:00;20` (drop-frame with `;`)
+  - Frame-accurate cutting with proper timebase handling
+- ✅ **Automatic framerate detection** from clips (59.94, 29.97, 24, etc.)
+- ✅ **⚔️ REVERSE BLADES mode** - Delete marked ranges, keep everything else!
+  - Perfect for removing ads, intros, or unwanted segments
+  - Mark what to DELETE instead of what to KEEP
+
+### **Core Features**
 - ✅ **Multiple time formats supported:**
   - `1m57-2m08` (minutes with "m")
   - `1:57-2:08` (colon format)
   - `0:02:25-0:02:45` (with hours)
   - `1h15m30-1h16m00` (with "h")
-- ✅ **Works with ANY framerate** (29.97, 59.94, 25, 24, 30, 60 fps...)
+  - `00:01:30:15-00:02:00:20` (timecode with frames) **NEW!**
+- ✅ **Works with ANY framerate** (23.976, 24, 25, 29.97, 30, 59.94, 60 fps...)
 - ✅ **Automatic timeline creation** from your clip
-- ✅ **Precision cutting** based on time ranges
-- ✅ **Keeps only selected parts** - everything else is eliminated
+- ✅ **Frame-accurate cutting** based on time ranges
+- ✅ **Keeps only selected parts** - or removes them with REVERSE mode
 - ✅ **All dash types supported** (-, –, —) and spaces too
 - ✅ **Dark theme GUI** matching Resolve's aesthetic
 - ✅ **Real-time connection** to Resolve API
@@ -124,9 +136,10 @@ Run the script using Resolve's bundled Python (see paths above).
    4m27-4m43
    ```
 
-6. **Click "🗡️ RUN THE BLADES"**
+6. **Click "🗡️ RUN THE BLADES"** to keep only marked segments
+   - OR click "⚔️ REVERSE BLADES" to delete marked segments and keep everything else
 
-7. **New timeline created** with only your selected segments!
+7. **New timeline created** with your processed segments!
 
 ### GUI Overview
 
@@ -147,6 +160,7 @@ Run the script using Resolve's bundled Python (see paths above).
 ├─────────────────────────────────────┤
 │ 3. Execute                          │
 │    [🗡️ RUN THE BLADES]             │
+│    [⚔️ REVERSE BLADES]             │
 ├─────────────────────────────────────┤
 │ Mission Status                      │
 │  ✓ Timeline created successfully!   │
@@ -161,15 +175,17 @@ Run the script using Resolve's bundled Python (see paths above).
 All these formats work:
 
 ```
-✅ 1m57-2m08           (minutes m seconds)
-✅ 1:57-2:08           (colons)
-✅ 0:02:25-0:02:45     (with hours)
-✅ 1h15m30-1h16m00     (with "h")
-✅ 1m57 - 2m08         (with spaces)
-✅ 1m57–2m08           (en dash)
-✅ 1m57—2m08           (em dash)
-✅ 1m57-2:08           (mixed formats)
-✅ 90-120              (just seconds)
+✅ 1m57-2m08                      (minutes m seconds)
+✅ 1:57-2:08                      (colons)
+✅ 0:02:25-0:02:45                (with hours)
+✅ 1h15m30-1h16m00                (with "h")
+✅ 00:01:30:15-00:02:00:20        (timecode non-drop-frame) NEW!
+✅ 00:01:30;15-00:02:00;20        (timecode drop-frame) NEW!
+✅ 1m57 - 2m08                    (with spaces)
+✅ 1m57–2m08                      (en dash)
+✅ 1m57—2m08                      (em dash)
+✅ 1m57-2:08                      (mixed formats)
+✅ 90-120                         (just seconds)
 ```
 
 **Format structure:** `start-end`
@@ -183,12 +199,13 @@ All these formats work:
 
 1. Script connects to DaVinci Resolve via Python API
 2. Finds first video clip in your Media Pool
-3. Parses your time ranges
-4. Creates new empty timeline
-5. Adds only the specified segments to the timeline
-6. Result: Clean timeline with ONLY your selected parts
+3. **Detects framerate automatically** from clip properties
+4. Parses your time ranges (with frame-accurate timecode support)
+5. Creates new empty timeline
+6. Adds only the specified segments to the timeline
+7. Result: Clean timeline with ONLY your selected parts (or everything EXCEPT them in REVERSE mode)
 
-**Example:**
+**Example - Normal Mode:**
 
 ```
 Original video: 30 minutes
@@ -201,6 +218,20 @@ Time ranges:
 Result timeline: "Assassinated - [clip name]"
   [Segment 1: 11s] [Segment 2: 12s] [Segment 3: 16s]
   Total: 39 seconds
+```
+
+**Example - REVERSE BLADES Mode:**
+
+```
+Original video: 10 minutes (600 seconds)
+
+Marked ranges (to DELETE):
+  2m00-2m30    (30 seconds - ads)
+  5m00-5m15    (15 seconds - intro)
+
+Result timeline: "Assassinated - [clip name]"
+  [0:00-2:00] [2:30-5:00] [5:15-10:00]
+  Total: 555 seconds (everything EXCEPT the marked parts)
 ```
 
 ---
@@ -298,6 +329,7 @@ python resolve_core.py
 
 ## 📝 Tips
 
+### **General Usage**
 - Mix formats freely: `1m57-2:08` works perfectly
 - Spaces are automatically removed
 - All dash types accepted (-, –, —)
@@ -306,17 +338,37 @@ python resolve_core.py
 - Script validates ranges against clip duration
 - Multiple timelines can be created (auto-numbered)
 
+### **Timecode with Frames (NEW in v1.1)**
+- Use `:` for non-drop-frame: `00:01:30:15` (hour:min:sec:frame)
+- Use `;` for drop-frame: `00:01:30;15` (for 29.97/59.94fps)
+- Framerate is detected automatically from your clip
+- Frame-accurate to ~2ms precision
+- Mix timecode with other formats: `00:01:30:15-2m00` works!
+
+### **REVERSE BLADES Mode (NEW in v1.1)**
+- Use when you want to DELETE sections instead of keeping them
+- Perfect for removing ads from recordings
+- Mark the unwanted parts, click REVERSE BLADES
+- Result: Everything EXCEPT your marked ranges
+
 ---
 
 ## ⚔️ About
 
 **Clip Assassin for DaVinci Resolve** eliminates unwanted footage with surgical precision.
 
-**Version:** 1.0
-**Date:** 2025-11-12
+**Version:** 1.1.0
+**Date:** 2025-11-22
 **For:** DaVinci Resolve 18+
 **API:** Python 3.6+
 **License:** Free to use and modify
+
+### What's New in v1.1.0
+- Professional timecode support with frame numbers (HH:MM:SS:FF)
+- Automatic framerate detection
+- REVERSE BLADES mode for deleting marked segments
+- Frame-accurate cutting with timebase handling
+- See [CHANGELOG.md](CHANGELOG.md) for full details
 
 ---
 

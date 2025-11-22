@@ -6,12 +6,13 @@ Converts various time formats to seconds
 import re
 
 
-def parse_time_range(range_string):
+def parse_time_range(range_string, framerate=30.0):
     """
     Parse a time range string like "1m57-2m08" or "1:57-2:08"
 
     Args:
         range_string: String in format "start-end"
+        framerate: Frame rate for timecode conversion (default: 30.0)
 
     Returns:
         tuple: (start_seconds, end_seconds) or None if invalid
@@ -30,8 +31,8 @@ def parse_time_range(range_string):
         return None
 
     # Parse start and end times
-    start = parse_time(parts[0])
-    end = parse_time(parts[-1])
+    start = parse_time(parts[0], framerate)
+    end = parse_time(parts[-1], framerate)
 
     if start is None or end is None:
         return None
@@ -42,19 +43,22 @@ def parse_time_range(range_string):
     return (start, end)
 
 
-def parse_time(time_string):
+def parse_time(time_string, framerate=30.0):
     """
-    Parse a single time string like "1m57", "1:57", "0:02:25", "1h30m45"
+    Parse a single time string like "1m57", "1:57", "0:02:25", "1h30m45", "00:01:30:15" or "00:01:30;15"
 
     Supported formats:
     - 1m57s or 1m57 (minutes and seconds with 'm')
     - 1:57 (MM:SS)
     - 0:02:25 (HH:MM:SS)
+    - 00:01:30:15 (HH:MM:SS:FF non-drop-frame timecode)
+    - 00:01:30;15 (HH:MM:SS;FF drop-frame timecode)
     - 1h30m45s or 1h30m (hours, minutes, seconds with 'h', 'm', 's')
     - 90 (just seconds as number)
 
     Args:
         time_string: Time string to parse
+        framerate: Frame rate for timecode conversion (default: 30.0)
 
     Returns:
         float: Time in seconds, or None if invalid
@@ -67,6 +71,22 @@ def parse_time(time_string):
     hours = 0
     minutes = 0
     seconds = 0
+    frames = 0
+    is_drop_frame = False
+    is_timecode_format = False
+
+    # Check for drop-frame timecode (semicolon before frames)
+    if ';' in time_string:
+        is_drop_frame = True
+        is_timecode_format = True
+        # Split by semicolon to get frames
+        semi_parts = time_string.split(';')
+        if len(semi_parts) == 2:
+            try:
+                frames = int(semi_parts[1])
+                time_string = semi_parts[0]  # Continue parsing the time part
+            except ValueError:
+                return None
 
     # Format: 1h30m45s or 1h30m or combinations with "h", "m", "s"
     if 'h' in time_string:
@@ -109,7 +129,7 @@ def parse_time(time_string):
             except ValueError:
                 return None
 
-    # Format: 0:02:25 or 1:57:30 or 1:57
+    # Format: 0:02:25 or 1:57:30 or 1:57 or 00:01:30:15 (non-drop-frame with frames)
     elif ':' in time_string:
         colon_parts = time_string.split(':')
 
@@ -123,6 +143,13 @@ def parse_time(time_string):
                 hours = int(colon_parts[0])
                 minutes = int(colon_parts[1])
                 seconds = int(colon_parts[2])
+            elif len(colon_parts) == 4:
+                # HH:MM:SS:FF (non-drop-frame timecode)
+                is_timecode_format = True
+                hours = int(colon_parts[0])
+                minutes = int(colon_parts[1])
+                seconds = int(colon_parts[2])
+                frames = int(colon_parts[3])
             elif len(colon_parts) == 1:
                 # Just a number
                 seconds = int(colon_parts[0])
@@ -137,18 +164,38 @@ def parse_time(time_string):
             return None
 
     # Validate non-negative
-    if hours < 0 or minutes < 0 or seconds < 0:
+    if hours < 0 or minutes < 0 or seconds < 0 or frames < 0:
         return None
 
-    return hours * 3600 + minutes * 60 + seconds
+    # TIMECODE FORMAT (HH:MM:SS:FF or HH:MM:SS;FF): Convert everything to frames first, then to seconds
+    if is_timecode_format and framerate > 0:
+        # Determine timebase (the "nominal" framerate used in timecode)
+        # For 59.94fps → timebase is 60
+        # For 29.97fps → timebase is 30
+        # For 23.976fps → timebase is 24
+        timebase = round(framerate)
+
+        # Calculate total frame number using timebase
+        total_frames = (hours * 3600 * timebase) + \
+                      (minutes * 60 * timebase) + \
+                      (seconds * timebase) + \
+                      frames
+
+        # Convert frames to seconds using ACTUAL framerate
+        # This ensures frame-accurate timing even with drop-frame rates
+        return total_frames / framerate
+    else:
+        # Standard time format: simple seconds calculation
+        return hours * 3600 + minutes * 60 + seconds
 
 
-def parse_timecodes(timecodes_text):
+def parse_timecodes(timecodes_text, framerate=30.0):
     """
     Parse multiple time ranges from text (one per line)
 
     Args:
         timecodes_text: Multi-line string with time ranges
+        framerate: Frame rate for timecode conversion (default: 30.0)
 
     Returns:
         list: List of tuples [(start, end), ...] sorted by start time
@@ -162,7 +209,7 @@ def parse_timecodes(timecodes_text):
         if not line:
             continue
 
-        parsed = parse_time_range(line)
+        parsed = parse_time_range(line, framerate)
         if parsed:
             ranges.append(parsed)
         else:
@@ -196,7 +243,11 @@ def format_seconds(seconds):
 
 # Testing
 if __name__ == "__main__":
-    test_cases = [
+    print("Testing time parser:")
+    print("-" * 50)
+
+    # Test basic formats
+    test_cases_basic = [
         "1m57-2m08",
         "1:57-2:08",
         "0:02:25-0:02:45",
@@ -206,10 +257,41 @@ if __name__ == "__main__":
         "90-120",
     ]
 
-    print("Testing time parser:")
-    print("-" * 50)
-    for test in test_cases:
-        result = parse_time_range(test)
+    print("\n1. Basic formats (30fps):")
+    for test in test_cases_basic:
+        result = parse_time_range(test, 30.0)
+        if result:
+            start, end = result
+            print(f"[OK] '{test}' -> {format_seconds(start)} to {format_seconds(end)}")
+        else:
+            print(f"[FAIL] '{test}' -> FAILED")
+
+    # Test timecode with frames
+    print("\n2. Timecode with frames (59.94fps):")
+    test_cases_timecode = [
+        ("00:00:10:00-00:00:20:00", 59.94),  # Non-drop-frame
+        ("00:00:10;00-00:00:20;00", 59.94),  # Drop-frame
+        ("00:01:30:15-00:02:00:20", 59.94),  # Non-drop-frame
+        ("00:01:30;15-00:02:00;20", 59.94),  # Drop-frame
+    ]
+
+    for test, fps in test_cases_timecode:
+        result = parse_time_range(test, fps)
+        if result:
+            start, end = result
+            print(f"[OK] '{test}' @ {fps}fps -> {format_seconds(start)} to {format_seconds(end)}")
+        else:
+            print(f"[FAIL] '{test}' -> FAILED")
+
+    # Test mixed formats
+    print("\n3. Mixed formats (30fps):")
+    test_cases_mixed = [
+        "1m30-00:02:00:00",
+        "00:01:00:15-2m00",
+    ]
+
+    for test in test_cases_mixed:
+        result = parse_time_range(test, 30.0)
         if result:
             start, end = result
             print(f"[OK] '{test}' -> {format_seconds(start)} to {format_seconds(end)}")

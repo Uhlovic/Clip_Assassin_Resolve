@@ -51,6 +51,8 @@ class ClipAssassinGUI:
         self.section_bg = "#2a2a2a"
         self.button_bg = "#cc0000"
         self.button_hover = "#ff0000"
+        self.reverse_button_bg = "#8800cc"
+        self.reverse_button_hover = "#aa00ff"
 
         # Configure root background
         self.root.configure(bg=self.bg_color)
@@ -147,7 +149,7 @@ class ClipAssassinGUI:
 
         format_label = tk.Label(
             section2,
-            text="Formats: 1m57-2m08 / 1:57-2:08 / 0:02:25-0:02:45 / 1h30m-1h31m",
+            text="Formats: 1m57-2m08 / 1:57-2:08 / 0:02:25-0:02:45 / 00:01:30:15-00:02:00:20 (timecode with frames)",
             font=("Arial", 8),
             fg="#999999",
             bg=self.section_bg,
@@ -202,6 +204,29 @@ class ClipAssassinGUI:
         )
         self.execute_btn.pack(fill=tk.X, pady=5)
 
+        self.reverse_btn = tk.Button(
+            section3,
+            text="⚔️ REVERSE BLADES",
+            command=self.execute_reverse_cutting,
+            bg=self.reverse_button_bg,
+            fg="white",
+            font=("Arial", 12, "bold"),
+            relief=tk.FLAT,
+            cursor="hand2",
+            state=tk.DISABLED
+        )
+        self.reverse_btn.pack(fill=tk.X, pady=5)
+
+        reverse_help = tk.Label(
+            section3,
+            text="REVERSE mode: Keep everything EXCEPT marked ranges (perfect for removing ads)",
+            font=("Arial", 7),
+            fg="#999999",
+            bg=self.section_bg,
+            anchor="w"
+        )
+        reverse_help.pack(fill=tk.X, pady=(0, 5))
+
         # Section 4: Mission Status
         section4 = tk.LabelFrame(
             self.root,
@@ -244,6 +269,7 @@ class ClipAssassinGUI:
         """Connect to DaVinci Resolve"""
         self.update_status("⏳ Connecting to Resolve...", "#ffaa00")
         self.execute_btn.config(state=tk.DISABLED)
+        self.reverse_btn.config(state=tk.DISABLED)
 
         def connect_thread():
             success, message = self.resolve_conn.connect()
@@ -257,11 +283,13 @@ class ClipAssassinGUI:
             self.connected = True
             self.update_status(f"✓ {message}", "#44ff44")
             self.execute_btn.config(state=tk.NORMAL)
+            self.reverse_btn.config(state=tk.NORMAL)
             self.update_result(self.resolve_conn.get_project_info())
         else:
             self.connected = False
             self.update_status(f"✗ {message}", "#ff4444")
             self.execute_btn.config(state=tk.DISABLED)
+            self.reverse_btn.config(state=tk.DISABLED)
             self.update_result(f"Connection failed:\n{message}\n\nMake sure DaVinci Resolve is running with a project open.")
 
     def update_status(self, text, color):
@@ -277,6 +305,14 @@ class ClipAssassinGUI:
 
     def execute_cutting(self):
         """Execute the video cutting operation"""
+        self._execute_cutting_internal(reverse_mode=False)
+
+    def execute_reverse_cutting(self):
+        """Execute the video cutting operation in REVERSE mode"""
+        self._execute_cutting_internal(reverse_mode=True)
+
+    def _execute_cutting_internal(self, reverse_mode=False):
+        """Internal method to execute cutting with optional reverse mode"""
         if not self.connected:
             messagebox.showerror("Not Connected", "Please connect to DaVinci Resolve first.")
             return
@@ -293,12 +329,17 @@ class ClipAssassinGUI:
             messagebox.showwarning("No Targets", "Please enter time ranges to cut.")
             return
 
-        # Disable button during operation
+        # Disable buttons during operation
         self.execute_btn.config(state=tk.DISABLED, text="⏳ Executing...")
-        self.update_result("🎯 Locking on targets...\nProcessing...\n")
+        self.reverse_btn.config(state=tk.DISABLED, text="⏳ Executing...")
+
+        if reverse_mode:
+            self.update_result("⚔️ REVERSE mode activated...\n🎯 Marking targets for elimination...\nProcessing...\n")
+        else:
+            self.update_result("🎯 Locking on targets...\nProcessing...\n")
 
         def cut_thread():
-            success, message = self.resolve_conn.cut_video(timecodes)
+            success, message = self.resolve_conn.cut_video(timecodes, reverse_mode=reverse_mode)
             self.root.after(0, lambda: self.cutting_complete(success, message))
 
         threading.Thread(target=cut_thread, daemon=True).start()
@@ -306,6 +347,7 @@ class ClipAssassinGUI:
     def cutting_complete(self, success, message):
         """Handle cutting operation result"""
         self.execute_btn.config(state=tk.NORMAL, text="🗡️ RUN THE BLADES")
+        self.reverse_btn.config(state=tk.NORMAL, text="⚔️ REVERSE BLADES")
 
         if success:
             self.update_result(message)
