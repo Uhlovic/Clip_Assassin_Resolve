@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   CLIP ASSASSIN - DaVinci Resolve
+echo   CLIP ASSASSIN v1.1 - DaVinci Resolve
 echo   Cuts. Without mercy.
 echo ========================================
 echo.
