@@ -8,24 +8,35 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. Now with 
 
 ---
 
-## ⚠️ IMPORTANT: STUDIO VERSION REQUIRED
+## 📌 Version Compatibility
 
-**External scripting (running scripts outside Resolve) ONLY works with DaVinci Resolve Studio.**
+| Version | External Scripting (.exe / python script) | Internal Scripting (Workspace → Scripts) |
+|---------|---------------------------|---------------------------|
+| ✅ **DaVinci Resolve Studio** | **✅ Full support** | **✅ Full support** |
+| ⚠️ **DaVinci Resolve (Free)** | **❌ NOT supported** | **✅ Workaround available!** |
 
-| Version | External Scripting Support |
-|---------|---------------------------|
-| ✅ **DaVinci Resolve Studio** | **Full support - Works perfectly** |
-| ❌ **DaVinci Resolve (Free)** | **NOT supported - Will fail to connect** |
+### 🆓 **FREE Version Users - Workaround Available!**
+
+If you have the **FREE version**, you can still use Clip Assassin with a workaround:
+
+**Use the FREE VERSION** (`clip_assassin_free.py`):
+- Runs **inside** DaVinci Resolve via **Workspace → Scripts** menu
+- Works with both FREE and STUDIO versions
+- Same features as the external version
+
+**Installation:** Run `INSTALL_FREE_VERSION.bat` (Windows) or `install_free_version.sh` (macOS/Linux)
+
+See [FREE Version Installation](#free-version-installation) below for details.
+
+---
 
 ### How to check your version:
 **Help → About DaVinci Resolve**
 
-If you don't see **"Studio"** in the title, this tool will **NOT work** with external Python scripts.
+If you don't see **"Studio"** in the title, use the **FREE version workaround** above.
 
-### Why Free version doesn't work:
-The free version only supports **internal scripting** (from Console within Resolve). **External scripting** (running Python scripts from outside the application like Clip Assassin does) is a **Studio-only feature**.
-
-**If you're getting "initialization of fusion script failed" error**, this is most likely because you're using the Free version.
+### Why Free version needs workaround:
+The free version only supports **internal scripting** (from within Resolve). **External scripting** (running Python scripts from outside the application) is a **Studio-only feature**.
 
 ---
 
@@ -88,7 +99,31 @@ The free version only supports **internal scripting** (from Console within Resol
   - macOS: `/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/`
   - Linux: `/opt/resolve/Developer/Scripting/`
 
-### Quick Start - Windows (Easiest!)
+### FREE Version Installation
+
+**For DaVinci Resolve FREE (or Studio) - Works with both!**
+
+#### Windows:
+1. **Download** or clone this repository
+2. **Run `INSTALL_FREE_VERSION.bat`** as Administrator
+3. **Restart DaVinci Resolve**
+4. **Access via**: Workspace → Scripts → Utility → clip_assassin_free
+
+#### macOS/Linux:
+1. **Download** or clone this repository
+2. **Run `./install_free_version.sh`** (may need sudo)
+3. **Restart DaVinci Resolve**
+4. **Access via**: Workspace → Scripts → Utility → clip_assassin_free
+
+**Note:** This version runs **inside** Resolve using internal scripting, so it works with FREE version!
+
+---
+
+### Studio Version - External Installation
+
+**For DaVinci Resolve STUDIO only**
+
+#### Quick Start - Windows (Easiest!)
 
 1. **Download `Clip Assassin.exe`** from [Releases](https://github.com/Uhlovic/Clip_Assassin_Resolve/releases)
 2. **Open DaVinci Resolve** with a project
@@ -136,7 +171,23 @@ Run the script using Resolve's bundled Python (see paths above).
 
 ## 💡 Usage
 
-### Quick Start
+### FREE Version Usage
+
+**For DaVinci Resolve FREE users:**
+
+1. **Open DaVinci Resolve**
+2. **Open or create a project**
+3. **Import a video clip** to your Media Pool
+4. **Go to**: Workspace → Scripts → Utility → **clip_assassin_free**
+5. **Enter time ranges** in the dialog
+6. **Click** "🗡️ RUN THE BLADES" or "⚔️ REVERSE BLADES"
+7. **Done!** New timeline created with your segments
+
+---
+
+### Studio Version Usage (External)
+
+**For DaVinci Resolve STUDIO users:**
 
 1. **Open DaVinci Resolve**
 2. **Open or create a project**
