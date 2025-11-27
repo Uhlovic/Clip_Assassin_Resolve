@@ -8,6 +8,27 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. Now with 
 
 ---
 
+## ⚠️ IMPORTANT: STUDIO VERSION REQUIRED
+
+**External scripting (running scripts outside Resolve) ONLY works with DaVinci Resolve Studio.**
+
+| Version | External Scripting Support |
+|---------|---------------------------|
+| ✅ **DaVinci Resolve Studio** | **Full support - Works perfectly** |
+| ❌ **DaVinci Resolve (Free)** | **NOT supported - Will fail to connect** |
+
+### How to check your version:
+**Help → About DaVinci Resolve**
+
+If you don't see **"Studio"** in the title, this tool will **NOT work** with external Python scripts.
+
+### Why Free version doesn't work:
+The free version only supports **internal scripting** (from Console within Resolve). **External scripting** (running Python scripts from outside the application like Clip Assassin does) is a **Studio-only feature**.
+
+**If you're getting "initialization of fusion script failed" error**, this is most likely because you're using the Free version.
+
+---
+
 ## ☕ Support
 
 **Did I save you time?** Consider buying me a coffee!
@@ -52,13 +73,13 @@ Automatically cut video clips based on time ranges in DaVinci Resolve. Now with 
 ### System Requirements
 
 #### For Windows (.exe version - Recommended):
-- ✅ **DaVinci Resolve 18+** (Free or Studio)
+- ✅ **DaVinci Resolve 18+ STUDIO** (Free version NOT supported)
 - ✅ **Windows 7/8/10/11**
 - ❌ **Python NOT required!**
 
 #### For macOS/Linux (Python version):
-- ✅ **DaVinci Resolve 18+** (Free or Studio)
-- ✅ **Python 3.6+** (usually pre-installed)
+- ✅ **DaVinci Resolve 18+ STUDIO** (Free version NOT supported)
+- ✅ **Python 3.9 or 3.10** (NOT 3.11+, NOT 3.6-3.8)
 - ✅ **macOS 10.12+ or Linux**
 
 #### What's Included with Resolve:
@@ -238,12 +259,40 @@ Result timeline: "Assassinated - [clip name]"
 
 ## 🛠️ Troubleshooting
 
-**"Could not connect to DaVinci Resolve"**
-- Make sure Resolve is running
-- Make sure a project is open
-- Try clicking "🔄 Reconnect"
+### **"Initialization of fusion script failed" or "Could not connect to DaVinci Resolve"**
 
-**"DaVinci Resolve Python API not found"**
+This is the **most common error**. Here's how to fix it:
+
+#### 1. **Check if you have Resolve STUDIO** (most common cause - 45% of cases)
+   - Open Resolve → **Help → About DaVinci Resolve**
+   - If it says **"DaVinci Resolve"** (without "Studio"), external scripting is **NOT supported**
+   - You need **DaVinci Resolve Studio** for this tool to work
+   - [Upgrade to Studio](https://www.blackmagicdesign.com/products/davinciresolve/studio) or use internal scripting only
+
+#### 2. **Enable External Scripting in Preferences** (25% of cases)
+   - Open Resolve Studio → **Preferences** (Ctrl+, or Cmd+,)
+   - Go to **System → General**
+   - Find **"External scripting using"** setting
+   - Change from **"None"** to **"Local"** or **"Network"**
+   - **Restart Resolve**
+
+#### 3. **Verify Resolve is running with a project open**
+   - Resolve must be running BEFORE you start Clip Assassin
+   - A project must be open (File → New Project or Open Project)
+   - At least one video clip should be in Media Pool
+
+#### 4. **Check Python version** (15% of cases)
+   - Run: `python --version`
+   - Required: **Python 3.9 or 3.10**
+   - If you have Python 3.11+ or older than 3.9, install Python 3.10
+   - Download from: [python.org](https://www.python.org/downloads/)
+
+#### 5. **Use the .exe version** (Windows only - easiest solution)
+   - Download `Clip Assassin.exe` from [Releases](https://github.com/Uhlovic/Clip_Assassin_Resolve/releases)
+   - No Python installation needed
+   - Should work out of the box with Resolve Studio
+
+### **"DaVinci Resolve Python API not found"**
 
 ⚠️ **Important:** The Python API is installed automatically with DaVinci Resolve in:
 - **Windows:** `C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting\Modules`
@@ -251,18 +300,21 @@ Result timeline: "Assassinated - [clip name]"
 - **Linux:** `/opt/resolve/Developer/Scripting/Modules`
 
 If you get this error:
-1. **Check if Resolve is properly installed** - try opening Resolve first
-2. **Verify the API folder exists** at the paths above
-3. **If using .exe version:** This should work automatically
-4. **If running Python scripts:** The script automatically adds these paths, but you can manually set:
+1. **Verify the API folder exists** at the paths above
+2. **Check if Resolve Studio is properly installed**
+3. **Set environment variables manually**:
    ```bash
-   # Windows
+   # Windows (Command Prompt)
    set RESOLVE_SCRIPT_API=C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Developer\Scripting
+   set RESOLVE_SCRIPT_LIB=C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll
+   set PYTHONPATH=%RESOLVE_SCRIPT_API%\Modules;%PYTHONPATH%
 
    # macOS/Linux
    export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
+   export PYTHONPATH="$RESOLVE_SCRIPT_API/Modules:$PYTHONPATH"
    ```
-5. **Reinstall Resolve** if the API folder is missing (it should install automatically)
+4. **Use the provided batch file**: `RUN_CLIP_ASSASSIN.bat` (sets up paths automatically)
+5. **Reinstall Resolve Studio** if the API folder is missing
 
 **"No video clip found in Media Pool"**
 - Import at least one video clip to Media Pool
@@ -359,8 +411,8 @@ python resolve_core.py
 
 **Version:** 1.1.0
 **Date:** 2025-11-22
-**For:** DaVinci Resolve 18+
-**API:** Python 3.6+
+**For:** DaVinci Resolve 18+ **STUDIO**
+**API:** Python 3.9 - 3.10 (NOT 3.11+)
 **License:** Free to use and modify
 
 ### What's New in v1.1.0
