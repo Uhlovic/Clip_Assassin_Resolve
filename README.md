@@ -259,6 +259,31 @@ Result timeline: "Assassinated - [clip name]"
 
 ## 🛠️ Troubleshooting
 
+### 🔧 **Quick Diagnosis Tool**
+
+If you're experiencing connection issues, run the **automated diagnostic tool** first:
+
+**Windows:**
+```cmd
+DIAGNOSE.bat
+```
+
+**macOS/Linux:**
+```bash
+./diagnose.sh
+```
+
+This tool will automatically check:
+- Python version compatibility
+- DaVinci Resolve installation
+- Python API availability
+- Fusion script library
+- Live connection to Resolve
+- Environment variables
+- And provide specific solutions for any issues found
+
+---
+
 ### **"Initialization of fusion script failed" or "Could not connect to DaVinci Resolve"**
 
 This is the **most common error**. Here's how to fix it:
